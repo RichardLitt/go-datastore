@@ -39,6 +39,7 @@ func New(prefix string, ds datastore.Datastore) *measure {
 		getSize:    metrics.NewHistogram(prefix+".Get.size", 0, maxSize, 3),
 
 		hasNum:     metrics.Counter(prefix + ".Has.num"),
+		hasTrue:    metrics.Counter(prefix + ".Has.true"),
 		hasErr:     metrics.Counter(prefix + ".Has.err"),
 		hasLatency: metrics.NewHistogram(prefix+".Has.latency", 0, maxLatency, 3),
 
@@ -67,6 +68,7 @@ type measure struct {
 	getSize    *metrics.Histogram
 
 	hasNum     metrics.Counter
+	hasTrue    metrics.Counter
 	hasErr     metrics.Counter
 	hasLatency *metrics.Histogram
 
@@ -119,6 +121,9 @@ func (m *measure) Has(key datastore.Key) (exists bool, err error) {
 	exists, err = m.backend.Has(key)
 	if err != nil {
 		m.hasErr.Add()
+	}
+	if exists {
+		m.hasTrue.Add()
 	}
 	return exists, err
 }
@@ -231,6 +236,7 @@ func (m *measure) Close() error {
 	m.getLatency.Remove()
 	m.getSize.Remove()
 	m.hasNum.Remove()
+	m.hasTrue.Remove()
 	m.hasErr.Remove()
 	m.hasLatency.Remove()
 	m.deleteNum.Remove()
